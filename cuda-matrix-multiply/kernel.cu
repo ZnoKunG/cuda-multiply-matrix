@@ -7,10 +7,9 @@
 #include <time.h>
 #include <iostream>
 
-#define N 1024
 #define BLOCK_SIZE 32
 
-__global__ void multiplyMatrix(float* A, float* B, float* C)
+__global__ void multiplyMatrix(float* A, float* B, float* C, int N)
 {
 	int row = blockIdx.x * blockDim.x + threadIdx.x;
 	int col = blockIdx.y * blockDim.y + threadIdx.y;
@@ -29,6 +28,7 @@ __global__ void multiplyMatrix(float* A, float* B, float* C)
 
 int main()
 {
+	int N = 1024;
 	float* a = new float[N * N];
 	float* b = new float[N * N];
 	float* c = new float[N * N];
@@ -52,7 +52,7 @@ int main()
 	// CPU execution
 	//---------------------------
 	start = clock();
-	std::cout << "Performing matrix multiplation on CPU ..." << std::endl;
+	std::cout << "Performing " << N << "x" << N << " matrix multiplation on CPU ..." << std::endl;
 
 	for (int i = 0; i < N; i++)
 	{
@@ -76,7 +76,8 @@ int main()
 	// GPU Execution
 	// -------------------------------------
 	start = clock();
-	std::cout << "Performing matrix multiplation on GPU ..." << std::endl;
+	std::cout << "Performing " << N << "x" << N << " matrix multiplation on GPU ..." << std::endl;
+
 	// Initialize pointers in GPU
 	float* cudaA = 0;
 	float* cudaB = 0;
@@ -95,7 +96,7 @@ int main()
 	int nBlocks = ceil(N / BLOCK_SIZE);
 	dim3 blocksPerGrid(nBlocks, nBlocks);
 
-	multiplyMatrix <<< blocksPerGrid, threadsPerBlock >>> (cudaA, cudaB, cudaC);
+	multiplyMatrix <<< blocksPerGrid, threadsPerBlock >>> (cudaA, cudaB, cudaC, N);
 
 	cudaMemcpy(c, cudaC, sizeof(c), cudaMemcpyDeviceToHost);
 	end = clock();
